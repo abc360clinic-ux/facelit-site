@@ -5,11 +5,11 @@ import { mkdir, writeFile, access } from "node:fs/promises";
 import path from "node:path";
 
 const ORIGIN = "https://facelit.in";
-const EXTRA = ["/treatments/", "/thank-you/", "/appointment/", "/consultation/"]; // not all in sitemap
+const EXTRA = ["/treatments/", "/equipment/", "/thank-you/", "/appointment/", "/consultation/"]; // not all in sitemap
 const key = (p) => (p === "/" ? "home" : p.replace(/^\/|\/$/g, "").replaceAll("/", "__"));
 const get = (u) => fetch(u, { redirect: "manual" });
 const pool = async (items, n, fn) => {
-  const q = [...items];
+  const q = items; // live array: handlers may push newly discovered URLs
   await Promise.all(Array.from({ length: n }, async () => { while (q.length) await fn(q.shift()); }));
 };
 
@@ -25,7 +25,8 @@ const index = [], skipped = [];
 const rewrite = (s) => s.replaceAll(`${ORIGIN}/`, "/").replaceAll(`${ORIGIN.replace("//", "\\/\\/")}\\/`, "\\/");
 const grabAssets = (s) => { for (const m of s.matchAll(/\/wp-content\/[^"'\s)>,\\]+/g)) assets.add(m[0].replace(/[?#].*$/, "")); };
 
-await pool([...urls], 6, async (u) => {
+const todo = [...urls];
+await pool(todo, 6, async (u) => {
   const p = decodeURI(new URL(u).pathname);
   const res = await get(u);
   if (res.status !== 200) return skipped.push([p, res.status, res.headers.get("location")]);
@@ -42,6 +43,14 @@ await pool([...urls], 6, async (u) => {
     og, tw,
     jsonld: $('script[type="application/ld+json"]').map((_, e) => $(e).html()).get(),
   };
+  // discover pagination (/blog/page/2/, /category/x/page/3/ ...) that is not in the WP sitemap
+  $("a[href]").each((_, e) => {
+    const m = new URL($(e).attr("href"), u);
+    if (m.origin === ORIGIN && /\/page\/\d+\/?$/.test(m.pathname)) {
+      const full = ORIGIN + m.pathname.replace(/\/?$/, "/");
+      if (!urls.has(full)) { urls.add(full); todo.push(full); }
+    }
+  });
   $("body script, body noscript").remove();
   const bodyHtml = rewrite($("body").html().trim());
   grabAssets(bodyHtml);
