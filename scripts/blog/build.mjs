@@ -31,10 +31,12 @@ function original(file) {
 const files = fs.readdirSync(PAGES).filter((f) => f.endsWith(".json"));
 const articles = [];
 const indexes = [];
+const cats = [];
 for (const f of files) {
   const raw = fs.readFileSync(path.join(PAGES, f), "utf8");
   const p = JSON.parse(raw);
   if (/(^|\s)blog(\s|$)/.test(p.bodyClass) && /^blog(__page__\d+)?\.json$/.test(f)) { indexes.push(f); continue; }
+  if (/(^|\s)category(\s|$)/.test(p.bodyClass) && /^category__/.test(f)) { cats.push(f); continue; }
   if (!/single-post|single-marketing_page/.test(p.bodyClass)) continue;
   // Skip pages already redesigned with the treatment kit (hub pages).
   // cp-anchor marks sections built with scripts/treatment-kit.
@@ -317,6 +319,62 @@ for (const f of indexes) {
   fs.writeFileSync(path.join(PAGES, f), JSON.stringify(page));
 }
 
+
+// ---------- category archive pages ----------
+for (const f of cats) {
+  const page = original(f);
+  const $ = cheerio.load(page.bodyHtml);
+  const M = $("main");
+  const name = text($, M.find("h1"));
+  const sub = M.find("h1").next("p").html().trim();
+  const catLinks = M.find('nav[aria-label="Blog categories"] a').map((_, a) => {
+    const A = $(a), href = A.attr("href"), label = A.html().trim();
+    return href === page.path.replace(/page\/\d+\/$/, "") ? `<a href="${href}" aria-current="page">${label}</a>` : `<a href="${href}">${label}</a>`;
+  }).get();
+  const posts = [];
+  M.find("li.group > a").each((_, a) => {
+    const A = $(a), href = A.attr("href"), ps = A.find("p");
+    posts.push({ href, img: A.find("img").attr("src"), alt: A.find("img").attr("alt") || "", date: text($, ps.first()), title: A.find("h2").html().trim(), excerpt: ps.length > 1 ? ps.last().html().trim() : "", ...(listing[href] || { topic: topicOf(text($, A.find("h2"))), mins: null }) });
+  });
+  const pg = M.find('nav[aria-label="Category pagination"] .page-numbers').map((_, el) => {
+    const E = $(el), t = text($, E);
+    if (E.is("span")) return `<span aria-current="page">${t}</span>`;
+    const lab = E.hasClass("prev") ? ' aria-label="Previous page"' : E.hasClass("next") ? ' aria-label="Next page"' : "";
+    return `<a href="${E.attr("href")}"${lab}>${t}</a>`;
+  }).get();
+  const pageN = (page.path.match(/page\/(\d+)\/$/) || [, null])[1];
+  const main = `<main class="relative overflow-x-clip text-ink" ${MARK}>
+<style>${css}</style>
+<section class="mx-auto max-w-7xl px-5 pt-32 pb-4 sm:px-8 sm:pt-36 sm:pb-5">
+ <div class="liquid-glass--section rounded-[1.75rem] border border-ink/8 lg:rounded-[2.35rem] bi-hero">
+ <nav class="ba-crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><a href="/blog/">Blog</a><span>/</span><b>${escHtml(name)}${pageN ? ` · Page ${pageN}` : ""}</b></nav>
+ <h1 class="font-serif">${escHtml(name)}</h1>
+ <p class="bi-sub">${sub}</p>
+ <div class="bi-tools" data-bi>
+ <label class="bi-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span class="sr-only">Search articles</span><input type="search" placeholder="Search ${escAttr(name.toLowerCase())} articles…" data-bisearch autocomplete="off"></label>
+ <nav class="bi-chips bi-cats" aria-label="Blog categories">${catLinks.join("")}</nav>
+ </div>
+ </div>
+</section>
+<section class="mx-auto max-w-7xl px-5 py-4 pb-10 sm:px-8 sm:py-5 sm:pb-14">
+ <ul class="bi-grid" data-bigrid>
+ ${posts.map((p, i) => card(p, i, i === 0 && posts.length > 2)).join("\n ")}
+ </ul>
+ <p class="bi-empty" data-biempty hidden>No articles match your search. Try another word, or <button type="button" data-bireset>show all articles</button>.</p>
+ ${pg.length ? `<nav class="bi-pager" aria-label="Category pages">${pg.join("")}</nav>` : ""}
+</section>
+<script>${js}</script>
+</main>`;
+  replaceMain(page, main);
+  const h = page.head;
+  const plainSub = cheerio.load(sub).text().trim();
+  if (!h.description) h.description = plainSub;
+  h.jsonld = (h.jsonld || []).filter((j) => !/"(CollectionPage)"/.test(j));
+  h.jsonld.push(JSON.stringify({ "@context": "https://schema.org", "@type": "CollectionPage", name: `${name} – Facelit Blog`, url: SITE + page.path, description: plainSub, isPartOf: { "@type": "Blog", name: "Facelit Blog", url: SITE + "/blog/" }, hasPart: posts.map((p) => ({ "@type": "BlogPosting", headline: cheerio.load(p.title).text(), url: SITE + p.href })) }));
+  h.jsonld.push(JSON.stringify({ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [["Home", "/"], ["Blog", "/blog/"], [name, page.path]].map(([n, u], i) => ({ "@type": "ListItem", position: i + 1, name: n, item: SITE + u })) }));
+  fs.writeFileSync(path.join(PAGES, f), JSON.stringify(page));
+}
+console.log(`category pages ${cats.length}`);
 console.log(`posts ${postFiles.length}, articles ${mktFiles.length}, index pages ${indexes.length}`);
 const noFaq = report.filter((r) => r[3] === 0).length;
 console.log(`FAQ dropdowns on ${report.length - noFaq} pages; ${noFaq} pages without a detectable FAQ`);

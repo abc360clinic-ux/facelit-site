@@ -21,4 +21,5 @@ if(tools&&grid){var items=[].slice.call(grid.querySelectorAll('.bi-item')),input
  if(more)more.addEventListener('click',function(){limit+=step;apply()});
  var reset=document.querySelector('[data-bireset]');if(reset)reset.addEventListener('click',function(){input.value='';topic='all';tools.querySelectorAll('[data-bitopic]').forEach(function(x){x.setAttribute('aria-pressed',x.dataset.bitopic==='all')});apply()});
  apply()}
+var cur=document.querySelector('.bi-cats [aria-current]');if(cur){var nav=cur.parentNode;nav.scrollLeft=cur.offsetLeft-(nav.clientWidth-cur.offsetWidth)/2}
 })();

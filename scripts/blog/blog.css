@@ -123,3 +123,5 @@
 .bi-pager span{background:#3a4d39;color:#fdf7ef;border-color:#3a4d39}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .ba-prose li>strong{display:inline}
+.bi-cats a{flex:none;padding:.5rem .95rem;border-radius:999px;border:1px solid rgba(58,77,57,.18);background:#fff;color:#2d3c2d;font:500 .86rem Onest,sans-serif;text-decoration:none;white-space:nowrap}
+.bi-cats a[aria-current=page]{background:#3a4d39;color:#fdf7ef;border-color:#3a4d39}
