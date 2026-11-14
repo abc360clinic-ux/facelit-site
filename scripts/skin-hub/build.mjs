@@ -224,7 +224,7 @@ const sections = [
  <div class="lg:sticky lg:top-28 lg:self-start">
  <p class="cp-eyebrow">Why Facelit</p>
  <h2 class="cp-h2 font-serif">Why Choose Facelit for Skin Treatments?</h2>
- ${img(A + "eco-doctor-devi.webp", "Facelit dermatologist", 672, 891, "cp-img cp-img--wide")}
+ ${img("/wp-content/uploads/2026/07/devi.webp", "Dr. Devi KR, Facelit", 1143, 1376, "cp-img cp-img--wide cp-img--doc")}
  </div>
  ${k.whyList([
    ["Dermatologist-led care", "Every plan is made by doctors who understand Indian skin and its risks."],

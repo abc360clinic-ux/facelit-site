@@ -180,6 +180,7 @@ const cpWrap = (html) => `<div class="cp">${html}</div>`;
 const main = `<main class="relative overflow-x-clip text-ink">${pre}${hero}<style>${css}</style>${pageCss}${cpWrap(machinesSection + matchSection + compareSection)}${doctor}${products}${cpWrap(faqSection)}${ctaSec}<script>${js}</script>${pageJs}</main>`;
 const b = page.bodyHtml, s = b.indexOf("<main"), e = b.indexOf("</main>") + 7;
 page.bodyHtml = b.slice(0, s) + main + b.slice(e);
+page.bodyHtml = page.bodyHtml.replace(/\/wp-content\/uploads\/2026\/08\/eco-doctor-devi\.webp/g, "/wp-content/uploads/2026/07/devi.webp"); // same doctor photo as the home page
 const h = page.head;
 h.title = h.og.title = h.tw.title = "Facelit Ecosystem | FDA-Cleared Machines, Doctors & Products in Kerala";
 h.description = h.og.description = h.tw.description = "Meet the technology behind Facelit: CO2 + Erbium Glass, PicoCare 450, Ultraformer III HIFU, Vivace MNRF, HydraFacial, CM Slim, GentleMax Pro and InMode Optimas, used by doctors in Kerala.";

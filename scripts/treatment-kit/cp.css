@@ -47,6 +47,7 @@
 .cp-img{width:100%;height:auto;aspect-ratio:1/1;object-fit:cover;border-radius:1.4rem;display:block}
 .cp-img--43{aspect-ratio:4/3}
 .cp-img--wide{aspect-ratio:16/10;margin-top:2rem}
+.cp-img--doc{object-position:50% 8%}
 .cp-img--contain{object-fit:contain;background:#efe9f5}
 .cp-stack{display:grid;gap:1rem}
 .cp-stack{grid-template-columns:1fr 1fr}
